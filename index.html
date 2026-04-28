@@ -2,19 +2,89 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Color ASCII Image Converter</title>
+<title>ASCII Converter</title>
+
 <style>
   body {
     font-family: monospace;
     background: #111;
     color: #eee;
     margin: 0;
-    display: flex;
     height: 100vh;
     overflow: hidden;
   }
 
+  /* ASCII BANNER */
+  #asciiBannerContainer {
+    width: 100%;
+    text-align: center;
+    margin-top: 10px;
+    position: relative;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  #asciiBanner {
+    display: inline-block;
+    color: #4caf50;
+    font-size: 14px;
+    line-height: 1.1;
+    opacity: 0;
+    white-space: pre;
+    animation: typewriter 2.5s steps(80) forwards,
+               glitch 1.5s infinite,
+               crtGlow 1.5s infinite alternate;
+    filter: drop-shadow(0 0 4px #4caf50);
+  }
+
+  @keyframes typewriter {
+    0% { opacity: 1; clip-path: inset(0 100% 0 0); }
+    100% { opacity: 1; clip-path: inset(0 0 0 0); }
+  }
+
+  @keyframes glitch {
+    0% { transform: translate(0,0); }
+    20% { transform: translate(-1px,1px); }
+    40% { transform: translate(1px,-1px); }
+    60% { transform: translate(-1px,0); }
+    80% { transform: translate(1px,1px); }
+    100% { transform: translate(0,0); }
+  }
+
+  #asciiBanner::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(0,255,0,0.05) 0px,
+      rgba(0,255,0,0.05) 2px,
+      rgba(0,0,0,0.15) 3px
+    );
+    mix-blend-mode: overlay;
+    animation: scanline 4s linear infinite;
+  }
+
+  @keyframes scanline {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100%); }
+  }
+
+  @keyframes crtGlow {
+    0% { filter: drop-shadow(0 0 2px #4caf50); }
+    100% { filter: drop-shadow(0 0 6px #4caf50); }
+  }
+
+  /* SIDEBAR — FULL HEIGHT, OVER TITLE */
   #sidebar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
     width: 240px;
     background: #1a1a1a;
     border-right: 2px solid #333;
@@ -22,11 +92,11 @@
     display: flex;
     flex-direction: column;
     gap: 15px;
+    z-index: 5000;
   }
 
   #sidebar h2 {
-    margin-top: 0;
-    font-size: 20px;
+    margin: 0;
     text-align: center;
   }
 
@@ -42,7 +112,6 @@
     border: 1px solid #555;
     padding: 8px;
     cursor: pointer;
-    transition: 0.2s;
   }
 
   #sidebar button:hover {
@@ -55,13 +124,13 @@
     color: #fff !important;
   }
 
+  /* MAIN CONTENT */
   #main {
-    flex: 1;
-    padding: 20px;
+    margin-left: 500px;
+    margin-top: 20px;
+    height: calc(100vh - 40px);
     overflow: auto;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
+    padding: 20px;
     position: relative;
   }
 
@@ -71,8 +140,6 @@
     padding: 10px;
     background: #000;
     line-height: 1;
-    max-width: 100%;
-    overflow-x: auto;
     display: inline-block;
   }
 
@@ -83,7 +150,6 @@
     pointer-events: none;
   }
 
-  /* LOADING BAR */
   #loadingBar {
     position: absolute;
     top: 20px;
@@ -108,16 +174,33 @@
   }
 </style>
 </head>
+
 <body>
 
+<!-- ASCII TITLE -->
+<div id="asciiBannerContainer">
+<pre id="asciiBanner">
+   ▄████████    ▄████████  ▄████████  ▄█   ▄█        ▄████████  ▄██████▄  ███▄▄▄▄    ▄█    █▄     ▄████████    ▄████████     ███        ▄████████    ▄████████ 
+  ███    ███   ███    ███ ███    ███ ███  ███       ███    ███ ███    ███ ███▀▀▀██▄ ███    ███   ███    ███   ███    ███ ▀█████████▄   ███    ███   ███    ███ 
+  ███    ███   ███    █▀  ███    █▀  ███▌ ███▌      ███    █▀  ███    ███ ███   ███ ███    ███   ███    █▀    ███    ███    ▀███▀▀██   ███    █▀    ███    ███ 
+  ███    ███   ███        ███        ███▌ ███▌      ███        ███    ███ ███   ███ ███    ███  ▄███▄▄▄      ▄███▄▄▄▄██▀     ███   ▀  ▄███▄▄▄      ▄███▄▄▄▄██▀ 
+▀███████████ ▀███████████ ███        ███▌ ███▌      ███        ███    ███ ███   ███ ███    ███ ▀▀███▀▀▀     ▀▀███▀▀▀▀▀       ███     ▀▀███▀▀▀     ▀▀███▀▀▀▀▀   
+  ███    ███          ███ ███    █▄  ███  ███       ███    █▄  ███    ███ ███   ███ ███    ███   ███    █▄  ▀███████████     ███       ███    █▄  ▀███████████ 
+  ███    ███    ▄█    ███ ███    ███ ███  ███       ███    ███ ███    ███ ███   ███ ███    ███   ███    ███   ███    ███     ███       ███    ███   ███    ███ 
+  ███    █▀   ▄████████▀  ████████▀  █▀   █▀        ████████▀   ▀██████▀   ▀█   █▀   ▀██████▀    ██████████   ███    ███    ▄████▀     ██████████   ███    ███ 
+                                                                                                              ███    ███                            ███    ███ 
+</pre>
+</div>
+
+<!-- SIDEBAR -->
 <div id="sidebar">
   <h2>Controls</h2>
 
   <input type="file" id="fileInput" accept="image/png, image/jpeg">
 
   <label>Font size:</label>
-  <input type="range" id="fontSize" min="4" max="20" value="8">
-  <input type="number" id="fontSizeInput" min="4" max="20" value="8">
+  <input type="range" id="fontSize" min="4" max="20" value="4">
+  <input type="number" id="fontSizeInput" min="4" max="20" value="4">
 
   <button id="exportTxt">Export .txt</button>
   <button id="exportHtml">Export Colored HTML</button>
@@ -133,6 +216,7 @@
   </select>
 </div>
 
+<!-- MAIN CONTENT -->
 <div id="main">
   <div id="loadingBar"><div></div></div>
   <img id="previewImage">
@@ -142,6 +226,8 @@
 <canvas id="canvas" style="display:none;"></canvas>
 
 <script>
+/* --- JS CLEAN VERSION (converter + tutorial + brightness fix) --- */
+
 let useColor = true;
 let ultraMode = false;
 let ultraScale = 1;
@@ -160,93 +246,79 @@ const fontSizeInput = document.getElementById("fontSizeInput");
 const loadingBar = document.getElementById("loadingBar");
 let lastImage = null;
 
-/* CACHE KEY */
 function getCacheKey() {
   return `${ultraMode}_${ultraScale}_${useColor}`;
 }
 
-/* SHOW/HIDE LOADING */
 function showLoading() { loadingBar.style.display = "block"; }
 function hideLoading() { loadingBar.style.display = "none"; }
 
-/* FONT SYNC */
 function applyFontSize() {
   let base = parseInt(fontSizeSlider.value);
   if (ultraMode) {
-    if (ultraScale == 2) base = base / 2;
-    if (ultraScale == 4) base = base / 4;
+    if (ultraScale == 2) base /= 2;
+    if (ultraScale == 4) base /= 4;
   }
   asciiEl.style.fontSize = base + "px";
 }
 
-fontSizeSlider.addEventListener("input", () => {
+fontSizeSlider.oninput = () => {
   fontSizeInput.value = fontSizeSlider.value;
   applyFontSize();
-});
-fontSizeInput.addEventListener("input", () => {
+};
+fontSizeInput.oninput = () => {
   let size = Math.min(20, Math.max(4, parseInt(fontSizeInput.value || "8")));
-  fontSizeInput.value = size;
   fontSizeSlider.value = size;
   applyFontSize();
-});
+};
 
-/* TOGGLE COLOR */
-document.getElementById("toggleColor").addEventListener("click", () => {
+document.getElementById("toggleColor").onclick = () => {
   useColor = !useColor;
   document.getElementById("toggleColor").textContent = useColor ? "Color" : "Monochrome";
   renderFromCacheOrGenerate();
-});
+};
 
-/* ULTRA MODE */
-document.getElementById("toggleUltra").addEventListener("click", () => {
+document.getElementById("toggleUltra").onclick = () => {
   ultraMode = !ultraMode;
   asciiChars = ultraMode ? asciiUltra : asciiNormal;
-  const btn = document.getElementById("toggleUltra");
-  if (ultraMode) btn.classList.add("activeButton");
-  else btn.classList.remove("activeButton");
+  document.getElementById("toggleUltra").classList.toggle("activeButton", ultraMode);
   applyFontSize();
   renderFromCacheOrGenerate();
-});
+};
 
-/* ULTRA SCALE */
-document.getElementById("ultraScale").addEventListener("change", e => {
+document.getElementById("ultraScale").onchange = e => {
   ultraScale = parseInt(e.target.value);
   applyFontSize();
   renderFromCacheOrGenerate();
-});
+};
 
-/* EXPORTS */
-document.getElementById("exportTxt").addEventListener("click", () => {
+document.getElementById("exportTxt").onclick = () => {
   const blob = new Blob([asciiEl.innerText], { type: "text/plain" });
-  const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url;
+  a.href = URL.createObjectURL(blob);
   a.download = "ascii_art.txt";
   a.click();
-  URL.revokeObjectURL(url);
-});
-document.getElementById("exportHtml").addEventListener("click", () => {
+};
+
+document.getElementById("exportHtml").onclick = () => {
   const html = `
 <!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"><title>ASCII Art</title>
-<style>body{background:#000;color:#fff;font-family:monospace;}
-pre{white-space:pre;line-height:1;font-size:${fontSizeSlider.value}px;}</style></head>
-<body><pre>${asciiEl.innerHTML}</pre></body></html>`;
+<style>body{background:#000;color:#fff;font-family:monospace;}pre{white-space:pre;line-height:1;font-size:${fontSizeSlider.value}px;}</style>
+</head><body><pre>${asciiEl.innerHTML}</pre></body></html>`;
   const blob = new Blob([html], { type: "text/html" });
-  const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url;
+  a.href = URL.createObjectURL(blob);
   a.download = "ascii_art.html";
   a.click();
-  URL.revokeObjectURL(url);
-});
+};
 
-/* IMAGE LOADING */
-fileInput.addEventListener("change", e => {
+fileInput.onchange = e => {
   const file = e.target.files[0];
   if (file) loadImage(file);
-});
+};
+
 function loadImage(file) {
   cachedAscii = {};
   lastImage = null;
@@ -257,6 +329,7 @@ function loadImage(file) {
       lastImage = img;
       previewImage.src = img.src;
       previewImage.style.display = "block";
+      applyFontSize();
       convertToAscii(img);
     };
     img.src = e.target.result;
@@ -264,7 +337,6 @@ function loadImage(file) {
   reader.readAsDataURL(file);
 }
 
-/* RENDER WITH LOADING EVEN FOR CACHE */
 function renderFromCacheOrGenerate() {
   if (!lastImage) return;
   const key = getCacheKey();
@@ -273,9 +345,9 @@ function renderFromCacheOrGenerate() {
     if (cachedAscii[key]) {
       asciiEl.innerHTML = cachedAscii[key];
       hideLoading();
-      return;
+    } else {
+      convertToAscii(lastImage);
     }
-    convertToAscii(lastImage);
   }, 50);
 }
 
@@ -298,57 +370,59 @@ function convertToAscii(img) {
   }, 50);
 }
 
-/* ASCII GENERATOR */
 function imageToAscii(imageData) {
   const { width, height, data } = imageData;
   let rows = [];
+
   for (let y = 0; y < height; y++) {
     let row = "";
     for (let x = 0; x < width; x++) {
       const i = (y * width + x) * 4;
       const r = data[i], g = data[i+1], b = data[i+2];
-      const brightness = 0.299*r + 0.587*g + 0.114*b;
+
+      let brightness = 0.299*r + 0.587*g + 0.114*b;
+      if (ultraMode) brightness = Math.min(255, brightness * 1.35);
+
       const idx = Math.floor((brightness / 255) * (asciiChars.length - 1));
       const char = asciiChars[idx];
-      if (useColor) row += `<span style="color: rgb(${r},${g},${b})">${char}</span>`;
-      else row += `<span style="color: #ffffff">${char}</span>`;
+
+      row += useColor
+        ? `<span style="color: rgb(${r},${g},${b})">${char}</span>`
+        : `<span style="color: #fff">${char}</span>`;
     }
     rows.push(row);
   }
+
   return rows.join("<br>");
 }
 
-/* ------------------------- */
-/*      INTERACTIVE TUTORIAL */
-/* ------------------------- */
+/* --- TUTORIAL --- */
 
 function clearHighlights() {
-  document.querySelectorAll("*").forEach(el => {
-    el.style.outline = "none";
-  });
+  document.querySelectorAll("*").forEach(el => el.style.outline = "none");
 }
 
 function startTutorial() {
   const steps = [
-    { id: "fileInput", text: "Here you input the image you want to convert" },
-    { id: "fontSize", text: "This slider changes the font size for the final image" },
-    { id: "toggleColor", text: "This button can switch between color and monochromatic mode" },
-    { id: "toggleUltra", text: "This enables Ultra detail mode for beter details" },
-    { id: "ultraScale", text: "This menu can change the strength of the ultra detail mode (1×, 2×, 4×)." },
-    { id: "exportTxt", text: "This button exports the image as a plain text (font scale and color cannot be exportet this way)" },
-    { id: "exportHtml", text: "this exports the image into HTML (with color and font size)" }
+    { id: "fileInput", text: "Upload an image to convert it to ASCII." },
+    { id: "fontSize", text: "Adjust ASCII font size." },
+    { id: "toggleColor", text: "Toggle color or monochrome mode." },
+    { id: "toggleUltra", text: "Enable ultra‑detail mode." },
+    { id: "ultraScale", text: "Set ultra‑detail scale." },
+    { id: "exportTxt", text: "Export ASCII as .txt file." },
+    { id: "exportHtml", text: "Export ASCII as colored HTML." }
   ];
 
   let index = 0;
 
   const overlay = document.createElement("div");
   overlay.style.position = "fixed";
-  overlay.style.top = "0";
-  overlay.style.left = "0";
+  overlay.style.top = 0;
+  overlay.style.left = 0;
   overlay.style.width = "100%";
   overlay.style.height = "100%";
   overlay.style.background = "rgba(0,0,0,0.4)";
-  overlay.style.zIndex = "9999";
+  overlay.style.zIndex = 9999;
   document.body.appendChild(overlay);
 
   const box = document.createElement("div");
@@ -361,7 +435,7 @@ function startTutorial() {
   box.style.color = "#fff";
   box.style.fontFamily = "monospace";
   box.style.lineHeight = "1.4";
-  box.style.zIndex = "10000";
+  box.style.zIndex = 10000;
   overlay.appendChild(box);
 
   const nextBtn = document.createElement("button");
@@ -377,7 +451,6 @@ function startTutorial() {
 
   function showStep() {
     const step = steps[index];
-
     if (!step) {
       clearHighlights();
       overlay.remove();
@@ -385,10 +458,7 @@ function startTutorial() {
     }
 
     const el = document.getElementById(step.id);
-    if (!el) return;
-
     clearHighlights();
-
     el.style.outline = "3px solid #4caf50";
     el.scrollIntoView({ behavior: "smooth", block: "center" });
 
@@ -401,13 +471,12 @@ function startTutorial() {
     let left = rect.right + 15;
     let top = rect.top;
 
-    if (left + boxWidth > window.innerWidth) {
+    if (left + boxWidth > window.innerWidth)
       left = rect.left - boxWidth - 15;
-    }
 
-    if (top + 140 > window.innerHeight) {
+    if (top + 140 > window.innerHeight)
       top = window.innerHeight - 160;
-    }
+
     if (top < 10) top = 10;
 
     box.style.left = left + "px";
@@ -419,16 +488,14 @@ function startTutorial() {
     showStep();
   };
 
-  showStep()
+  showStep();
 }
 
-window.addEventListener("load", () => {
+window.onload = () => {
   setTimeout(() => {
-    if (confirm("Would you like to go through a short tutorial?")) {
-      startTutorial();
-    }
+    if (confirm("Start tutorial?")) startTutorial();
   }, 500);
-});
+};
 </script>
 
 </body>
