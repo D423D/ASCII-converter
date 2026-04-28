@@ -127,9 +127,9 @@
   /* MAIN CONTENT */
   #main {
     margin-left: 500px;
-    margin-top: 20px;
+    margin-top: -30px;
     height: calc(100vh - 40px);
-    overflow: auto;
+    overflow: auto; /* ⭐ scrollbars for large ASCII */
     padding: 20px;
     position: relative;
   }
@@ -140,14 +140,20 @@
     padding: 10px;
     background: #000;
     line-height: 1;
+
+    max-width: 100%;
+    max-height: calc(100vh - 200px); /* ⭐ prevents overflow */
+    overflow: auto; /* ⭐ scrollbars for ASCII */
+
     display: inline-block;
   }
 
   #previewImage {
     max-width: 100%;
+    max-height: calc(100vh - 200px);
+    object-fit: contain;
     display: none;
-    position: absolute;
-    pointer-events: none;
+    position: relative;
   }
 
   #loadingBar {
@@ -226,7 +232,7 @@
 <canvas id="canvas" style="display:none;"></canvas>
 
 <script>
-/* --- JS CLEAN VERSION (converter + tutorial + brightness fix) --- */
+/* --- CLEAN JS --- */
 
 let useColor = true;
 let ultraMode = false;
@@ -267,7 +273,7 @@ fontSizeSlider.oninput = () => {
   applyFontSize();
 };
 fontSizeInput.oninput = () => {
-  let size = Math.min(20, Math.max(4, parseInt(fontSizeInput.value || "8")));
+  let size = Math.min(20, Math.max(4, parseInt(fontSizeInput.value || "4")));
   fontSizeSlider.value = size;
   applyFontSize();
 };
@@ -329,7 +335,9 @@ function loadImage(file) {
       lastImage = img;
       previewImage.src = img.src;
       previewImage.style.display = "block";
-      applyFontSize();
+
+      applyFontSize(); /* ⭐ apply BEFORE generating ASCII */
+
       convertToAscii(img);
     };
     img.src = e.target.result;
@@ -492,6 +500,10 @@ function startTutorial() {
 }
 
 window.onload = () => {
+  fontSizeSlider.value = 4;
+  fontSizeInput.value = 4;
+  applyFontSize();
+
   setTimeout(() => {
     if (confirm("Start tutorial?")) startTutorial();
   }, 500);
