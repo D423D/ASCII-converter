@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Color ASCII Image Converter</title>
+<style>
+  body {
+    font-family: monospace;
+    background: #111;
+    color: #eee;
+    margin: 0;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  #sidebar {
+    width: 240px;
+    background: #1a1a1a;
+    border-right: 2px solid #333;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  #sidebar h2 {
+    margin-top: 0;
+    font-size: 20px;
+    text-align: center;
+  }
+
+  #sidebar input,
+  #sidebar button,
+  #sidebar select {
+    width: 100%;
+  }
+
+  #sidebar button {
+    background: #333;
+    color: #eee;
+    border: 1px solid #555;
+    padding: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
+  #sidebar button:hover {
+    background: #555;
+  }
+
+  .activeButton {
+    background: #4caf50 !important;
+    border-color: #6aff7a !important;
+    color: #fff !important;
+  }
+
+  #main {
+    flex: 1;
+    padding: 20px;
+    overflow: auto;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    position: relative;
+  }
+
+  #ascii {
+    white-space: pre;
+    border: 1px solid #444;
+    padding: 10px;
+    background: #000;
+    line-height: 1;
+    max-width: 100%;
+    overflow-x: auto;
+    display: inline-block;
+  }
+
+  #previewImage {
+    max-width: 100%;
+    display: none;
+    position: absolute;
+    pointer-events: none;
+  }
+
+  /* LOADING BAR */
+  #loadingBar {
+    position: absolute;
+    top: 20px;
+    width: 300px;
+    height: 8px;
+    background: #333;
+    border-radius: 4px;
+    overflow: hidden;
+    display: none;
+  }
+
+  #loadingBar div {
+    width: 40%;
+    height: 100%;
+    background: #4caf50;
+    animation: loadingAnim 0.8s infinite linear;
+  }
+
+  @keyframes loadingAnim {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(300%); }
+  }
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <h2>Controls</h2>
+
+  <input type="file" id="fileInput" accept="image/png, image/jpeg">
+
+  <label>Font size:</label>
+  <input type="range" id="fontSize" min="4" max="20" value="8">
+  <input type="number" id="fontSizeInput" min="4" max="20" value="8">
+
+  <button id="exportTxt">Export .txt</button>
+  <button id="exportHtml">Export Colored HTML</button>
+
+  <button id="toggleColor">Color</button>
+  <button id="toggleUltra">Ultra‑detail mode</button>
+
+  <label>Ultra scale:</label>
+  <select id="ultraScale">
+    <option value="1">1×</option>
+    <option value="2">2×</option>
+    <option value="4">4×</option>
+  </select>
+</div>
+
+<div id="main">
+  <div id="loadingBar"><div></div></div>
+  <img id="previewImage">
+  <pre id="ascii"></pre>
+</div>
+
+<canvas id="canvas" style="display:none;"></canvas>
+
+<script>
+let useColor = true;
+let ultraMode = false;
+let ultraScale = 1;
+
+let cachedAscii = {};   // ⭐ CACHE
+
+const asciiNormal = "@%#*+=-:. ";
+const asciiUltra = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:\",^`'.";
+let asciiChars = asciiNormal;
+
+const fileInput = document.getElementById("fileInput");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const asciiEl = document.getElementById("ascii");
+const previewImage = document.getElementById("previewImage");
+const fontSizeSlider = document.getElementById("fontSize");
+const fontSizeInput = document.getElementById("fontSizeInput");
+const loadingBar = document.getElementById("loadingBar");
+
+let lastImage = null;
+
+/* CACHE KEY */
+function getCacheKey() {
+  return `${ultraMode}_${ultraScale}_${useColor}`;
+}
+
+/* SHOW LOADING */
+function showLoading() {
+  loadingBar.style.display = "block";
+}
+
+/* HIDE LOADING */
+function hideLoading() {
+  loadingBar.style.display = "none";
+}
+
+/* FONT SYNC */
+function applyFontSize() {
+  let base = parseInt(fontSizeSlider.value);
+
+  if (ultraMode) {
+    if (ultraScale == 2) base = base / 2;
+    if (ultraScale == 4) base = base / 4;
+  }
+
+  asciiEl.style.fontSize = base + "px";
+}
+
+fontSizeSlider.addEventListener("input", () => {
+  fontSizeInput.value = fontSizeSlider.value;
+  applyFontSize();
+});
+
+fontSizeInput.addEventListener("input", () => {
+  let size = Math.min(20, Math.max(4, parseInt(fontSizeInput.value || "8")));
+  fontSizeInput.value = size;
+  fontSizeSlider.value = size;
+  applyFontSize();
+});
+
+/* TOGGLE COLOR */
+document.getElementById("toggleColor").addEventListener("click", () => {
+  useColor = !useColor;
+  document.getElementById("toggleColor").textContent = useColor ? "Color" : "Monochrome";
+
+  renderFromCacheOrGenerate();
+});
+
+/* ULTRA MODE */
+document.getElementById("toggleUltra").addEventListener("click", () => {
+  ultraMode = !ultraMode;
+  asciiChars = ultraMode ? asciiUltra : asciiNormal;
+
+  const btn = document.getElementById("toggleUltra");
+  if (ultraMode) btn.classList.add("activeButton");
+  else btn.classList.remove("activeButton");
+
+  applyFontSize();
+  renderFromCacheOrGenerate();
+});
+
+/* ULTRA SCALE */
+document.getElementById("ultraScale").addEventListener("change", e => {
+  ultraScale = parseInt(e.target.value);
+  applyFontSize();
+  renderFromCacheOrGenerate();
+});
+
+/* EXPORT TXT */
+document.getElementById("exportTxt").addEventListener("click", () => {
+  const blob = new Blob([asciiEl.innerText], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "ascii_art.txt";
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+/* EXPORT HTML */
+document.getElementById("exportHtml").addEventListener("click", () => {
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>ASCII Art</title>
+<style>
+body{background:#000;color:#fff;font-family:monospace;}
+pre{white-space:pre;line-height:1;font-size:${fontSizeSlider.value}px;}
+</style>
+</head>
+<body>
+<pre>${asciiEl.innerHTML}</pre>
+</body>
+</html>`;
+  const blob = new Blob([html], { type: "text/html" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "ascii_art.html";
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+/* IMAGE LOADING */
+fileInput.addEventListener("change", e => {
+  const file = e.target.files[0];
+  if (file) loadImage(file);
+});
+
+function loadImage(file) {
+  cachedAscii = {}; // ⭐ CLEAR CACHE
+  lastImage = null;
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      lastImage = img;
+      previewImage.src = img.src;
+      previewImage.style.display = "block";
+      convertToAscii(img);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+/* MAIN RENDER FUNCTION WITH LOADING BAR EVEN FOR CACHE */
+function renderFromCacheOrGenerate() {
+  if (!lastImage) return;
+
+  const key = getCacheKey();
+
+  showLoading();
+
+  setTimeout(() => {
+    if (cachedAscii[key]) {
+      asciiEl.innerHTML = cachedAscii[key];
+      hideLoading();
+      return;
+    }
+
+    convertToAscii(lastImage);
+  }, 50);
+}
+
+function convertToAscii(img) {
+  showLoading();
+
+  setTimeout(() => {
+    let baseWidth = 400;
+    if (ultraMode) baseWidth *= ultraScale;
+
+    const scale = baseWidth / img.width;
+    const w = Math.floor(img.width * scale);
+    const h = Math.floor(img.height * scale * 0.5);
+
+    canvas.width = w;
+    canvas.height = h;
+
+    ctx.drawImage(img, 0, 0, w, h);
+
+    const ascii = imageToAscii(ctx.getImageData(0, 0, w, h));
+    asciiEl.innerHTML = ascii;
+
+    cachedAscii[getCacheKey()] = ascii; // ⭐ SAVE TO CACHE
+
+    previewImage.style.display = "none";
+    hideLoading();
+  }, 50);
+}
+
+/* ASCII GENERATOR */
+function imageToAscii(imageData) {
+  const { width, height, data } = imageData;
+  let rows = [];
+
+  for (let y = 0; y < height; y++) {
+    let row = "";
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      const r = data[i], g = data[i+1], b = data[i+2];
+
+      const brightness = 0.299*r + 0.587*g + 0.114*b;
+      const idx = Math.floor((brightness / 255) * (asciiChars.length - 1));
+      const char = asciiChars[idx];
+
+      if (useColor) {
+        row += `<span style="color: rgb(${r},${g},${b})">${char}</span>`;
+      } else {
+        row += `<span style="color: #ffffff">${char}</span>`;
+      }
+    }
+    rows.push(row);
+  }
+
+  return rows.join("<br>");
+}
+</script>
+
+</body>
+</html>
