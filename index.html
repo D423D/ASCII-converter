@@ -3,38 +3,287 @@
 <head>
 <meta charset="UTF-8">
 <title>ASCII Converter</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
+  html,
   body {
-    font-family: monospace;
-    background: #111;
-    color: #eee;
-    margin: 0;
-    height: 100vh;
+    height: 100%;
     overflow: hidden;
   }
 
-  /* ASCII BANNER */
+  :root {
+    color-scheme: dark;
+    --bg: #111315;
+    --bg-soft: #17191c;
+    --panel: rgba(26, 28, 31, 0.94);
+    --panel-border: rgba(255, 255, 255, 0.08);
+    --panel-strong: rgba(255, 255, 255, 0.16);
+    --text: #f3f4f6;
+    --muted: #a1a1aa;
+    --accent: #e5e7eb;
+    --accent-strong: #d4d4d8;
+    --shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    color: var(--text);
+    font-family: "IBM Plex Mono", "Fira Code", monospace;
+    background: #101214;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.02));
+    opacity: 0.04;
+  }
+
+  #app {
+    height: 100vh;
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    overflow: hidden;
+  }
+
+  #sidebar {
+    position: relative;
+    height: 100vh;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-gutter: stable;
+    padding: 16px 14px;
+    padding-bottom: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: var(--panel);
+    backdrop-filter: blur(14px);
+    border-right: 1px solid var(--panel-border);
+    box-shadow: var(--shadow);
+    z-index: 5;
+  }
+
+  #sidebar::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  #sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.16);
+    border-radius: 999px;
+  }
+
+  .panelCard,
+  .controlGroup {
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    background: #181a1d;
+    box-shadow: none;
+  }
+
+  .panelCard h1,
+  .panelCard p,
+  .controlGroup p,
+  .controlGroup h2,
+  .controlLabel,
+  .groupHeader {
+    margin: 0;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .eyebrow::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: #d4d4d8;
+    box-shadow: none;
+  }
+
+  .panelCard h1 {
+    font-size: 20px;
+    line-height: 1.1;
+  }
+
+  .panelCard p,
+  .metaText {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .groupHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .statusPill {
+    padding: 5px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text);
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .statusPill.busy {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text);
+  }
+
+  .statusPill.error {
+    border-color: rgba(255, 123, 123, 0.2);
+    background: rgba(255, 123, 123, 0.12);
+    color: #ffb4b4;
+  }
+
+  .controlLabel {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 12px;
+    color: var(--text);
+  }
+
+  #sidebar input,
+  #sidebar button,
+  #sidebar select {
+    width: 100%;
+    font: inherit;
+  }
+
+  #sidebar input[type="file"],
+  #sidebar input[type="number"],
+  #sidebar select {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 8px 10px;
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.045);
+  }
+
+  #sidebar input[type="file"] {
+    padding: 10px;
+  }
+
+  #sidebar input[type="range"] {
+    accent-color: #d4d4d8;
+  }
+
+  #sidebar button {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 10px 12px;
+    color: var(--text);
+    background: #1d2024;
+    cursor: pointer;
+    transition: transform 140ms ease, border-color 140ms ease, background 140ms ease, box-shadow 140ms ease;
+  }
+
+  #sidebar button:hover,
+  #sidebar select:hover,
+  #sidebar input:hover {
+    border-color: rgba(255, 255, 255, 0.18);
+  }
+
+  #sidebar button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.18);
+  }
+
+  #sidebar button:disabled,
+  #sidebar select:disabled {
+    opacity: 0.48;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .activeButton {
+    border-color: rgba(255, 255, 255, 0.22) !important;
+    background: #262a2f !important;
+    color: #ffffff !important;
+    box-shadow: none;
+  }
+
+  .rangeRow,
+  .buttonRow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 88px;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .buttonRow {
+    grid-template-columns: 1fr;
+    margin-top: 12px;
+  }
+
+  .toggleGrid {
+    display: grid;
+    gap: 10px;
+  }
+
+  #main {
+    min-width: 0;
+    min-height: 0;
+    padding: 24px clamp(18px, 3vw, 36px) 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow: hidden;
+  }
+
   #asciiBannerContainer {
     width: 100%;
-    text-align: center;
-    margin-top: 10px;
-    position: relative;
-    z-index: 1;
-    pointer-events: none;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 24px;
+    background: #17191c;
+    box-shadow: var(--shadow);
   }
 
   #asciiBanner {
     display: inline-block;
-    color: #4caf50;
+    min-width: 100%;
+    margin: 0;
+    padding: 18px 24px;
+    color: #e5e7eb;
     font-size: 14px;
-    line-height: 1.1;
+    line-height: 1.05;
     opacity: 0;
     white-space: pre;
-    animation: typewriter 2.5s steps(80) forwards,
-               glitch 1.5s infinite,
-               crtGlow 1.5s infinite alternate;
-    filter: drop-shadow(0 0 4px #4caf50);
+    animation:
+      typewriter 2.5s steps(80) forwards,
+      crtGlow 1.5s infinite alternate;
+    filter: none;
   }
 
   @keyframes typewriter {
@@ -42,473 +291,967 @@
     100% { opacity: 1; clip-path: inset(0 0 0 0); }
   }
 
-  @keyframes glitch {
-    0% { transform: translate(0,0); }
-    20% { transform: translate(-1px,1px); }
-    40% { transform: translate(1px,-1px); }
-    60% { transform: translate(-1px,0); }
-    80% { transform: translate(1px,1px); }
-    100% { transform: translate(0,0); }
-  }
-
-  #asciiBanner::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    background: repeating-linear-gradient(
-      to bottom,
-      rgba(0,255,0,0.05) 0px,
-      rgba(0,255,0,0.05) 2px,
-      rgba(0,0,0,0.15) 3px
-    );
-    mix-blend-mode: overlay;
-    animation: scanline 4s linear infinite;
-  }
-
-  @keyframes scanline {
-    0% { transform: translateY(-100%); }
-    100% { transform: translateY(100%); }
-  }
-
   @keyframes crtGlow {
-    0% { filter: drop-shadow(0 0 2px #4caf50); }
-    100% { filter: drop-shadow(0 0 6px #4caf50); }
+    0% { opacity: 0.92; }
+    100% { opacity: 1; }
   }
 
-  /* SIDEBAR — FULL HEIGHT, OVER TITLE */
-  #sidebar {
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 240px;
-    background: #1a1a1a;
-    border-right: 2px solid #333;
-    padding: 20px;
+  #stage {
+    position: relative;
+    flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    z-index: 5000;
+    align-items: stretch;
+    border-radius: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: #16181b;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    padding: 28px;
   }
 
-  #sidebar h2 {
-    margin: 0;
+  #stage::before {
+    content: "";
+    position: absolute;
+    inset: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 20px;
+    pointer-events: none;
+  }
+
+  #loadingBar {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    width: min(320px, 100%);
+    height: 10px;
+    margin-bottom: 18px;
+    border-radius: 999px;
+    overflow: hidden;
+    display: none;
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35);
+  }
+
+  #loadingProgress {
+    width: 0%;
+    height: 100%;
+    border-radius: inherit;
+    background: #e5e7eb;
+    box-shadow: none;
+    transition: width 120ms linear;
+  }
+
+  #emptyState {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    place-items: center;
+    padding: 24px;
     text-align: center;
+    color: var(--muted);
   }
 
-  #sidebar input,
-  #sidebar button,
-  #sidebar select {
-    width: 100%;
+  #emptyState strong {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text);
+    font-size: 20px;
   }
 
-  #sidebar button {
-    background: #333;
-    color: #eee;
-    border: 1px solid #555;
-    padding: 8px;
-    cursor: pointer;
-  }
-
-  #sidebar button:hover {
-    background: #555;
-  }
-
-  .activeButton {
-    background: #4caf50 !important;
-    border-color: #6aff7a !important;
-    color: #fff !important;
-  }
-
-  /* MAIN CONTENT */
-  #main {
-    margin-left: 500px;
-    margin-top: -30px;
-    height: calc(100vh - 40px);
-    overflow: auto; /* ⭐ scrollbars for large ASCII */
-    padding: 20px;
-    position: relative;
-  }
-
-  #ascii {
-    white-space: pre;
-    border: 1px solid #444;
-    padding: 10px;
-    background: #000;
-    line-height: 1;
-
-    max-width: 100%;
-    max-height: calc(100vh - 200px); /* ⭐ prevents overflow */
-    overflow: auto; /* ⭐ scrollbars for ASCII */
-
-    display: inline-block;
+  #previewImage,
+  #asciiViewport {
+    display: none;
+    margin: 0 auto;
   }
 
   #previewImage {
     max-width: 100%;
-    max-height: calc(100vh - 200px);
-    object-fit: contain;
-    display: none;
+    height: auto;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.24);
+  }
+
+  #asciiViewport {
     position: relative;
+    flex: 1;
+    width: 100%;
+    min-height: 0;
+    overflow: auto;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: #000;
+    padding: 14px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
   }
 
-  #loadingBar {
+  #asciiScaler {
     position: absolute;
-    top: 20px;
-    width: 300px;
-    height: 8px;
-    background: #333;
-    border-radius: 4px;
-    overflow: hidden;
-    display: none;
+    top: 0;
+    left: 0;
+    transform-origin: top left;
   }
 
-  #loadingBar div {
-    width: 40%;
-    height: 100%;
-    background: #4caf50;
-    animation: loadingAnim 0.8s infinite linear;
+  #asciiCanvas {
+    display: block;
+    image-rendering: auto;
   }
 
-  @keyframes loadingAnim {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(300%); }
+  @media (max-width: 980px) {
+    #app {
+      grid-template-columns: 1fr;
+    }
+
+    #sidebar {
+      position: relative;
+      height: auto;
+      max-height: 46vh;
+      min-height: auto;
+      border-right: 0;
+      border-bottom: 1px solid var(--panel-border);
+    }
+
+    #main {
+      padding-top: 18px;
+    }
+
+    #emptyState {
+      min-height: 280px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    #main,
+    #sidebar {
+      padding-left: 14px;
+      padding-right: 14px;
+    }
+
+    #asciiBanner {
+      font-size: 9px;
+      padding: 16px;
+    }
+
+    #stage {
+      padding: 18px;
+      border-radius: 22px;
+    }
+
+    .rangeRow {
+      grid-template-columns: 1fr 72px;
+    }
   }
 </style>
 </head>
 
 <body>
+<div id="app">
+  <aside id="sidebar">
+    <section class="panelCard">
+      <p class="eyebrow">ASCII Lab</p>
+      <h1>Generator</h1>
+      <p>Dense image-to-ASCII preview without the giant DOM hit from 2x and 4x detail modes.</p>
+    </section>
 
-<!-- ASCII TITLE -->
-<div id="asciiBannerContainer">
+    <section class="controlGroup">
+      <div class="groupHeader">
+        <span>Input</span>
+        <span id="statusPill" class="statusPill">Idle</span>
+      </div>
+
+      <label class="controlLabel" for="fileInput">Image file</label>
+      <input type="file" id="fileInput" accept="image/png, image/jpeg">
+      <p class="metaText" id="renderMeta">Load an image to start rendering.</p>
+    </section>
+
+    <section class="controlGroup">
+      <div class="groupHeader">
+        <span>Typography</span>
+      </div>
+
+      <label class="controlLabel" for="fontSize">Font size</label>
+      <div class="rangeRow">
+        <input type="range" id="fontSize" min="4" max="20" value="4">
+        <input type="number" id="fontSizeInput" min="4" max="20" value="4">
+      </div>
+    </section>
+
+    <section class="controlGroup">
+      <div class="groupHeader">
+        <span>Zoom</span>
+      </div>
+
+      <label class="controlLabel" for="zoomRange">Preview zoom</label>
+      <div class="rangeRow">
+        <input type="range" id="zoomRange" min="25" max="1000" value="100">
+        <input type="number" id="zoomInput" min="25" max="1000" value="100">
+      </div>
+
+      <div class="buttonRow">
+        <button id="zoomReset">Fit to view</button>
+      </div>
+    </section>
+
+    <section class="controlGroup">
+      <div class="groupHeader">
+        <span>Render</span>
+      </div>
+
+      <div class="toggleGrid">
+        <button id="toggleColor" class="activeButton">Color</button>
+        <button id="toggleUltra">Ultra-detail mode</button>
+      </div>
+
+      <label class="controlLabel" for="ultraScale" style="margin-top: 12px;">Ultra scale</label>
+      <select id="ultraScale">
+        <option value="1">1x</option>
+        <option value="2">2x</option>
+        <option value="4">4x</option>
+      </select>
+    </section>
+
+    <section class="controlGroup">
+      <div class="groupHeader">
+        <span>Export</span>
+      </div>
+
+      <div class="buttonRow">
+        <button id="exportTxt">Export .txt</button>
+        <button id="exportHtml">Export colored HTML</button>
+      </div>
+    </section>
+  </aside>
+
+  <main id="main">
+    <div id="asciiBannerContainer">
 <pre id="asciiBanner">
-   ▄████████    ▄████████  ▄████████  ▄█   ▄█        ▄████████  ▄██████▄  ███▄▄▄▄    ▄█    █▄     ▄████████    ▄████████     ███        ▄████████    ▄████████ 
-  ███    ███   ███    ███ ███    ███ ███  ███       ███    ███ ███    ███ ███▀▀▀██▄ ███    ███   ███    ███   ███    ███ ▀█████████▄   ███    ███   ███    ███ 
-  ███    ███   ███    █▀  ███    █▀  ███▌ ███▌      ███    █▀  ███    ███ ███   ███ ███    ███   ███    █▀    ███    ███    ▀███▀▀██   ███    █▀    ███    ███ 
-  ███    ███   ███        ███        ███▌ ███▌      ███        ███    ███ ███   ███ ███    ███  ▄███▄▄▄      ▄███▄▄▄▄██▀     ███   ▀  ▄███▄▄▄      ▄███▄▄▄▄██▀ 
-▀███████████ ▀███████████ ███        ███▌ ███▌      ███        ███    ███ ███   ███ ███    ███ ▀▀███▀▀▀     ▀▀███▀▀▀▀▀       ███     ▀▀███▀▀▀     ▀▀███▀▀▀▀▀   
-  ███    ███          ███ ███    █▄  ███  ███       ███    █▄  ███    ███ ███   ███ ███    ███   ███    █▄  ▀███████████     ███       ███    █▄  ▀███████████ 
-  ███    ███    ▄█    ███ ███    ███ ███  ███       ███    ███ ███    ███ ███   ███ ███    ███   ███    ███   ███    ███     ███       ███    ███   ███    ███ 
-  ███    █▀   ▄████████▀  ████████▀  █▀   █▀        ████████▀   ▀██████▀   ▀█   █▀   ▀██████▀    ██████████   ███    ███    ▄████▀     ██████████   ███    ███ 
-                                                                                                              ███    ███                            ███    ███ 
+   ▄████████    ▄████████  ▄████████  ▄█   ▄█        ▄████████  ▄██████▄  ███▄▄▄▄    ▄█    █▄     ▄████████    ▄████████     ███        ▄████████    ▄████████
+  ███    ███   ███    ███ ███    ███ ███  ███       ███    ███ ███    ███ ███▀▀▀██▄ ███    ███   ███    ███   ███    ███ ▀█████████▄   ███    ███   ███    ███
+  ███    ███   ███    █▀  ███    █▀  ███▌ ███▌      ███    █▀  ███    ███ ███   ███ ███    ███   ███    █▀    ███    ███    ▀███▀▀██   ███    █▀    ███    ███
+  ███    ███   ███        ███        ███▌ ███▌      ███        ███    ███ ███   ███ ███    ███  ▄███▄▄▄      ▄███▄▄▄▄██▀     ███   ▀  ▄███▄▄▄      ▄███▄▄▄▄██▀
+▀███████████ ▀███████████ ███        ███▌ ███▌      ███        ███    ███ ███   ███ ███    ███ ▀▀███▀▀▀     ▀▀███▀▀▀▀▀       ███     ▀▀███▀▀▀     ▀▀███▀▀▀▀▀
+  ███    ███          ███ ███    █▄  ███  ███       ███    █▄  ███    ███ ███   ███ ███    ███   ███    █▄  ▀███████████     ███       ███    █▄  ▀███████████
+  ███    ███    ▄█    ███ ███    ███ ███  ███       ███    ███ ███    ███ ███   ███ ███    ███   ███    ███   ███    ███     ███       ███    ███   ███    ███
+  ███    █▀   ▄████████▀  ████████▀  █▀   █▀        ████████▀   ▀██████▀   ▀█   █▀   ▀██████▀    ██████████   ███    ███    ▄████▀     ██████████   ███    ███
+                                                                                                              ███    ███                            ███    ███
 </pre>
+    </div>
+
+    <section id="stage">
+      <div id="loadingBar">
+        <div id="loadingProgress"></div>
+      </div>
+
+      <div id="emptyState">
+        <div>
+          <strong>Upload an image.</strong>
+          The preview now renders through canvas compositing, so high detail stays responsive instead of flooding the page with spans.
+        </div>
+      </div>
+
+      <img id="previewImage" alt="Uploaded image preview">
+
+      <div id="asciiViewport">
+        <div id="asciiScaler">
+          <canvas id="asciiCanvas"></canvas>
+        </div>
+      </div>
+    </section>
+  </main>
 </div>
 
-<!-- SIDEBAR -->
-<div id="sidebar">
-  <h2>Controls</h2>
-
-  <input type="file" id="fileInput" accept="image/png, image/jpeg">
-
-  <label>Font size:</label>
-  <input type="range" id="fontSize" min="4" max="20" value="4">
-  <input type="number" id="fontSizeInput" min="4" max="20" value="4">
-
-  <button id="exportTxt">Export .txt</button>
-  <button id="exportHtml">Export Colored HTML</button>
-
-  <button id="toggleColor">Color</button>
-  <button id="toggleUltra">Ultra‑detail mode</button>
-
-  <label>Ultra scale:</label>
-  <select id="ultraScale">
-    <option value="1">1×</option>
-    <option value="2">2×</option>
-    <option value="4">4×</option>
-  </select>
-</div>
-
-<!-- MAIN CONTENT -->
-<div id="main">
-  <div id="loadingBar"><div></div></div>
-  <img id="previewImage">
-  <pre id="ascii"></pre>
-</div>
-
-<canvas id="canvas" style="display:none;"></canvas>
+<canvas id="sourceCanvas" style="display:none;"></canvas>
 
 <script>
-/* --- CLEAN JS --- */
-
 let useColor = true;
 let ultraMode = false;
 let ultraScale = 1;
-let cachedAscii = {};
+let cachedFrames = {};
+let lastImage = null;
+let currentFrame = null;
+let renderSequence = 0;
+let zoomPercent = 100;
+
 const asciiNormal = "@%#*+=-:. ";
-const asciiUltra = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:\",^`'.";
-let asciiChars = asciiNormal;
+const asciiUltra = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\\\|()1{}[]?-_+~<>i!lI;:\",^`'.";
 
 const fileInput = document.getElementById("fileInput");
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
-const asciiEl = document.getElementById("ascii");
+const sourceCanvas = document.getElementById("sourceCanvas");
+const sourceCtx = sourceCanvas.getContext("2d", { willReadFrequently: true });
+const asciiCanvas = document.getElementById("asciiCanvas");
+const asciiCtx = asciiCanvas.getContext("2d");
+const asciiScaler = document.getElementById("asciiScaler");
 const previewImage = document.getElementById("previewImage");
+const asciiViewport = document.getElementById("asciiViewport");
+const emptyState = document.getElementById("emptyState");
 const fontSizeSlider = document.getElementById("fontSize");
 const fontSizeInput = document.getElementById("fontSizeInput");
+const zoomRange = document.getElementById("zoomRange");
+const zoomInput = document.getElementById("zoomInput");
 const loadingBar = document.getElementById("loadingBar");
-let lastImage = null;
+const loadingProgress = document.getElementById("loadingProgress");
+const statusPill = document.getElementById("statusPill");
+const renderMeta = document.getElementById("renderMeta");
+const ultraScaleSelect = document.getElementById("ultraScale");
+const exportTxtBtn = document.getElementById("exportTxt");
+const exportHtmlBtn = document.getElementById("exportHtml");
 
-function getCacheKey() {
-  return `${ultraMode}_${ultraScale}_${useColor}`;
+const measureCanvas = document.createElement("canvas");
+const measureCtx = measureCanvas.getContext("2d");
+let resizeTimer = 0;
+
+function getFrameKey() {
+  return `${ultraMode}_${ultraScale}`;
 }
 
-function showLoading() { loadingBar.style.display = "block"; }
-function hideLoading() { loadingBar.style.display = "none"; }
+function nextPaint() {
+  return new Promise(resolve => requestAnimationFrame(resolve));
+}
+
+function getAsciiChars() {
+  return ultraMode ? asciiUltra : asciiNormal;
+}
+
+function getEffectiveFontSize() {
+  const base = parseInt(fontSizeSlider.value, 10) || 4;
+  if (!ultraMode) return base;
+  return Math.max(0.75, base / ultraScale);
+}
+
+function updateStatus(text, tone = "idle") {
+  statusPill.textContent = text;
+  statusPill.classList.remove("busy", "error");
+
+  if (tone === "busy") statusPill.classList.add("busy");
+  if (tone === "error") statusPill.classList.add("error");
+}
+
+function showLoading(progress = 0.04) {
+  loadingBar.style.display = "block";
+  setLoading(progress);
+}
+
+function setLoading(progress) {
+  const clamped = Math.max(0, Math.min(1, progress));
+  loadingProgress.style.width = `${Math.round(clamped * 100)}%`;
+}
+
+function hideLoading() {
+  loadingBar.style.display = "none";
+  loadingProgress.style.width = "0%";
+}
+
+function syncControls() {
+  document.getElementById("toggleColor").classList.toggle("activeButton", useColor);
+  document.getElementById("toggleColor").textContent = useColor ? "Color" : "Monochrome";
+  document.getElementById("toggleUltra").classList.toggle("activeButton", ultraMode);
+  ultraScaleSelect.disabled = !ultraMode;
+}
+
+function syncActionButtons() {
+  const hasFrame = Boolean(currentFrame);
+  exportTxtBtn.disabled = !hasFrame;
+  exportHtmlBtn.disabled = !hasFrame;
+}
+
+function setZoom(value) {
+  zoomPercent = Math.min(1000, Math.max(25, parseInt(value || "100", 10)));
+  zoomRange.value = zoomPercent;
+  zoomInput.value = zoomPercent;
+
+  if (currentFrame) {
+    renderCurrentFrame();
+  }
+}
 
 function applyFontSize() {
-  let base = parseInt(fontSizeSlider.value);
-  if (ultraMode) {
-    if (ultraScale == 2) base /= 2;
-    if (ultraScale == 4) base /= 4;
+  fontSizeInput.value = fontSizeSlider.value;
+
+  if (currentFrame) {
+    renderCurrentFrame();
   }
-  asciiEl.style.fontSize = base + "px";
+}
+
+function getCanvasMetrics(fontSize) {
+  const renderFontSize = Math.max(1.5, fontSize);
+  measureCtx.font = `600 ${renderFontSize}px monospace`;
+  const measuredWidth = measureCtx.measureText("M").width;
+  const charWidth = measuredWidth > 0 ? measuredWidth : renderFontSize * 0.62;
+
+  return {
+    renderFontSize,
+    charWidth,
+    lineHeight: renderFontSize
+  };
+}
+
+function getSamplingRatio() {
+  const { charWidth, lineHeight } = getCanvasMetrics(getEffectiveFontSize());
+  return charWidth / lineHeight;
+}
+
+function getCellBackgroundAlpha(brightness) {
+  if (ultraMode) {
+    return Math.max(0.06, (brightness / 255) * 0.18);
+  }
+
+  return brightness > 168 ? 0.22 : 0;
+}
+
+function getAsciiCellStyle(r, g, b, brightness, rawChar) {
+  if (!useColor) {
+    return {
+      textColor: "#ffffff",
+      backgroundColor: ""
+    };
+  }
+
+  if (ultraMode) {
+    const textColor = brightness > 156
+      ? `rgb(${Math.max(0, Math.round(r * 0.22))}, ${Math.max(0, Math.round(g * 0.22))}, ${Math.max(0, Math.round(b * 0.22))})`
+      : `rgb(${Math.min(255, Math.round(r * 0.45 + 140))}, ${Math.min(255, Math.round(g * 0.45 + 140))}, ${Math.min(255, Math.round(b * 0.45 + 140))})`;
+
+    return {
+      textColor,
+      backgroundColor: `rgb(${r}, ${g}, ${b})`
+    };
+  }
+
+  const backgroundAlpha = getCellBackgroundAlpha(brightness);
+  return {
+    textColor: `rgb(${r}, ${g}, ${b})`,
+    backgroundColor: backgroundAlpha > 0 || rawChar === " "
+      ? `rgba(${r}, ${g}, ${b}, ${Math.max(backgroundAlpha, 0.08)})`
+      : ""
+  };
+}
+
+function updateRenderMeta(frame = currentFrame) {
+  if (!frame) {
+    renderMeta.textContent = "Load an image to start rendering.";
+    return;
+  }
+
+  const fontSize = getEffectiveFontSize();
+  renderMeta.textContent = `${frame.width} x ${frame.height} chars | ${useColor ? "color" : "mono"} | font ${fontSize.toFixed(fontSize < 1 ? 2 : 1)}px`;
 }
 
 fontSizeSlider.oninput = () => {
   fontSizeInput.value = fontSizeSlider.value;
   applyFontSize();
 };
+
 fontSizeInput.oninput = () => {
-  let size = Math.min(20, Math.max(4, parseInt(fontSizeInput.value || "4")));
+  const size = Math.min(20, Math.max(4, parseInt(fontSizeInput.value || "4", 10)));
   fontSizeSlider.value = size;
   applyFontSize();
 };
 
+zoomRange.oninput = () => {
+  setZoom(zoomRange.value);
+};
+
+zoomInput.oninput = () => {
+  setZoom(zoomInput.value);
+};
+
+document.getElementById("zoomReset").onclick = () => {
+  setZoom(100);
+};
+
+asciiViewport.addEventListener("wheel", event => {
+  if (!currentFrame || !event.ctrlKey) return;
+
+  event.preventDefault();
+  const delta = event.deltaY < 0 ? 10 : -10;
+  setZoom(zoomPercent + delta);
+}, { passive: false });
+
 document.getElementById("toggleColor").onclick = () => {
   useColor = !useColor;
-  document.getElementById("toggleColor").textContent = useColor ? "Color" : "Monochrome";
-  renderFromCacheOrGenerate();
+  syncControls();
+  renderCurrentFrame();
 };
 
 document.getElementById("toggleUltra").onclick = () => {
   ultraMode = !ultraMode;
-  asciiChars = ultraMode ? asciiUltra : asciiNormal;
-  document.getElementById("toggleUltra").classList.toggle("activeButton", ultraMode);
-  applyFontSize();
+  syncControls();
+  updateRenderMeta();
   renderFromCacheOrGenerate();
 };
 
-document.getElementById("ultraScale").onchange = e => {
-  ultraScale = parseInt(e.target.value);
-  applyFontSize();
+ultraScaleSelect.onchange = event => {
+  ultraScale = parseInt(event.target.value, 10);
+  updateRenderMeta();
   renderFromCacheOrGenerate();
 };
 
 document.getElementById("exportTxt").onclick = () => {
-  const blob = new Blob([asciiEl.innerText], { type: "text/plain" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "ascii_art.txt";
-  a.click();
+  if (!currentFrame) return;
+
+  const blob = new Blob([currentFrame.text], { type: "text/plain" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "ascii_art.txt";
+  link.click();
 };
 
 document.getElementById("exportHtml").onclick = () => {
-  const html = `
-<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"><title>ASCII Art</title>
-<style>body{background:#000;color:#fff;font-family:monospace;}pre{white-space:pre;line-height:1;font-size:${fontSizeSlider.value}px;}</style>
-</head><body><pre>${asciiEl.innerHTML}</pre></body></html>`;
+  if (!currentFrame) return;
+
+  const fontSize = getEffectiveFontSize();
+  const html = buildExportHtml(currentFrame, fontSize);
   const blob = new Blob([html], { type: "text/html" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "ascii_art.html";
-  a.click();
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "ascii_art.html";
+  link.click();
 };
 
-fileInput.onchange = e => {
-  const file = e.target.files[0];
+fileInput.onchange = event => {
+  const [file] = event.target.files;
   if (file) loadImage(file);
 };
 
 function loadImage(file) {
-  cachedAscii = {};
+  cachedFrames = {};
+  currentFrame = null;
   lastImage = null;
+  syncActionButtons();
+  previewImage.style.display = "none";
+  asciiViewport.style.display = "none";
+  emptyState.style.display = "grid";
+  updateStatus("Loading", "busy");
+  showLoading(0.08);
+
   const reader = new FileReader();
-  reader.onload = e => {
+  reader.onload = event => {
     const img = new Image();
     img.onload = () => {
       lastImage = img;
       previewImage.src = img.src;
-      previewImage.style.display = "block";
-
-      applyFontSize(); /* ⭐ apply BEFORE generating ASCII */
-
-      convertToAscii(img);
+      previewImage.style.display = "none";
+      emptyState.style.display = "none";
+      updateRenderMeta();
+      renderFromCacheOrGenerate();
     };
-    img.src = e.target.result;
+    img.src = event.target.result;
   };
   reader.readAsDataURL(file);
 }
 
 function renderFromCacheOrGenerate() {
   if (!lastImage) return;
-  const key = getCacheKey();
-  showLoading();
-  setTimeout(() => {
-    if (cachedAscii[key]) {
-      asciiEl.innerHTML = cachedAscii[key];
-      hideLoading();
-    } else {
-      convertToAscii(lastImage);
-    }
-  }, 50);
-}
 
-function convertToAscii(img) {
-  showLoading();
-  setTimeout(() => {
-    let baseWidth = 400;
-    if (ultraMode) baseWidth *= ultraScale;
-    const scale = baseWidth / img.width;
-    const w = Math.floor(img.width * scale);
-    const h = Math.floor(img.height * scale * 0.5);
-    canvas.width = w;
-    canvas.height = h;
-    ctx.drawImage(img, 0, 0, w, h);
-    const ascii = imageToAscii(ctx.getImageData(0, 0, w, h));
-    asciiEl.innerHTML = ascii;
-    cachedAscii[getCacheKey()] = ascii;
+  const key = getFrameKey();
+  if (cachedFrames[key]) {
+    currentFrame = cachedFrames[key];
     previewImage.style.display = "none";
-    hideLoading();
-  }, 50);
-}
-
-function imageToAscii(imageData) {
-  const { width, height, data } = imageData;
-  let rows = [];
-
-  for (let y = 0; y < height; y++) {
-    let row = "";
-    for (let x = 0; x < width; x++) {
-      const i = (y * width + x) * 4;
-      const r = data[i], g = data[i+1], b = data[i+2];
-
-      let brightness = 0.299*r + 0.587*g + 0.114*b;
-      if (ultraMode) brightness = Math.min(255, brightness * 1.35);
-
-      const idx = Math.floor((brightness / 255) * (asciiChars.length - 1));
-      const char = asciiChars[idx];
-
-      row += useColor
-        ? `<span style="color: rgb(${r},${g},${b})">${char}</span>`
-        : `<span style="color: #fff">${char}</span>`;
-    }
-    rows.push(row);
+    renderCurrentFrame();
+    return;
   }
 
-  return rows.join("<br>");
+  convertToAscii(lastImage);
 }
 
-/* --- TUTORIAL --- */
+async function convertToAscii(img) {
+  const jobId = ++renderSequence;
+  updateStatus("Analyzing", "busy");
+  showLoading(0.06);
+
+  const frame = await buildAsciiFrame(img, jobId);
+  if (!frame || jobId !== renderSequence) return;
+
+  cachedFrames[getFrameKey()] = frame;
+  currentFrame = frame;
+  syncActionButtons();
+  previewImage.style.display = "none";
+
+  await drawFrame(frame, jobId);
+  if (jobId !== renderSequence) return;
+
+  updateStatus("Ready");
+  updateRenderMeta(frame);
+  hideLoading();
+}
+
+async function buildAsciiFrame(img, jobId) {
+  let baseWidth = 400;
+  if (ultraMode) baseWidth *= ultraScale;
+
+  const scale = baseWidth / img.width;
+  const samplingRatio = getSamplingRatio();
+  const width = Math.max(1, Math.floor(img.width * scale));
+  const height = Math.max(1, Math.floor(img.height * scale * samplingRatio));
+
+  sourceCanvas.width = width;
+  sourceCanvas.height = height;
+  sourceCtx.clearRect(0, 0, width, height);
+  sourceCtx.drawImage(img, 0, 0, width, height);
+
+  const imageData = sourceCtx.getImageData(0, 0, width, height);
+  const pixels = new Uint8ClampedArray(imageData.data);
+  const rows = new Array(height);
+  const chars = getAsciiChars();
+
+  for (let y = 0; y < height; y++) {
+    const rowChars = new Array(width);
+
+    for (let x = 0; x < width; x++) {
+      const index = (y * width + x) * 4;
+      const r = pixels[index];
+      const g = pixels[index + 1];
+      const b = pixels[index + 2];
+
+      let brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+      if (ultraMode) brightness = Math.min(255, brightness * 1.35);
+
+      const charIndex = Math.floor((brightness / 255) * (chars.length - 1));
+      rowChars[x] = chars[charIndex];
+    }
+
+    rows[y] = rowChars.join("");
+
+    if ((y + 1) % 12 === 0) {
+      if (jobId !== renderSequence) return null;
+      setLoading(0.08 + ((y + 1) / height) * 0.58);
+      await nextPaint();
+    }
+  }
+
+  return {
+    width,
+    height,
+    rows,
+    pixels,
+    text: rows.join("\n")
+  };
+}
+
+function renderCurrentFrame() {
+  if (!currentFrame) return;
+
+  const jobId = ++renderSequence;
+  updateStatus("Drawing", "busy");
+  showLoading(0.72);
+  drawFrame(currentFrame, jobId).then(() => {
+    if (jobId !== renderSequence) return;
+    updateStatus("Ready");
+    updateRenderMeta(currentFrame);
+    hideLoading();
+  });
+}
+
+function updateViewportFit(contentWidth, contentHeight) {
+  const viewportStyles = window.getComputedStyle(asciiViewport);
+  const paddingLeft = parseFloat(viewportStyles.paddingLeft);
+  const paddingRight = parseFloat(viewportStyles.paddingRight);
+  const paddingTop = parseFloat(viewportStyles.paddingTop);
+  const paddingBottom = parseFloat(viewportStyles.paddingBottom);
+  const viewportPaddingX = paddingLeft + paddingRight;
+  const viewportPaddingY = paddingTop + paddingBottom;
+  const availableWidth = Math.max(1, asciiViewport.clientWidth - viewportPaddingX);
+  const availableHeight = Math.max(1, asciiViewport.clientHeight - viewportPaddingY);
+  const fitScale = Math.min(1, availableWidth / contentWidth, availableHeight / contentHeight);
+  const scale = fitScale * (zoomPercent / 100);
+  const maxCanvasDimension = 8192;
+  const maxCanvasPixels = 24000000;
+  const dimensionLimitedScale = Math.min(maxCanvasDimension / contentWidth, maxCanvasDimension / contentHeight);
+  const pixelLimitedScale = Math.sqrt(maxCanvasPixels / Math.max(1, contentWidth * contentHeight));
+  const renderScale = Math.max(0.05, Math.min(scale, dimensionLimitedScale, pixelLimitedScale));
+  const extraScale = scale / renderScale;
+  const scaledWidth = contentWidth * scale;
+  const scaledHeight = contentHeight * scale;
+  const left = paddingLeft + Math.max(0, (availableWidth - scaledWidth) / 2);
+  const top = paddingTop + Math.max(0, (availableHeight - scaledHeight) / 2);
+
+  asciiScaler.style.left = `${left}px`;
+  asciiScaler.style.top = `${top}px`;
+  asciiScaler.style.transform = `scale(${extraScale})`;
+  asciiScaler.style.width = `${contentWidth * renderScale}px`;
+  asciiScaler.style.height = `${contentHeight * renderScale}px`;
+
+  return { renderScale };
+}
+
+async function drawFrame(frame, jobId) {
+  previewImage.style.display = "none";
+  asciiViewport.style.display = "block";
+  emptyState.style.display = "none";
+
+  const { renderFontSize, charWidth, lineHeight } = getCanvasMetrics(getEffectiveFontSize());
+  const logicalWidth = frame.width * charWidth;
+  const logicalHeight = frame.height * lineHeight;
+  const cssWidth = Math.max(1, logicalWidth);
+  const cssHeight = Math.max(1, logicalHeight);
+  const { renderScale } = updateViewportFit(cssWidth, cssHeight);
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const rasterScale = renderScale * dpr;
+  const rasterWidth = Math.max(1, cssWidth * renderScale);
+  const rasterHeight = Math.max(1, cssHeight * renderScale);
+
+  asciiCanvas.width = Math.ceil(rasterWidth * dpr);
+  asciiCanvas.height = Math.ceil(rasterHeight * dpr);
+  asciiCanvas.style.width = `${rasterWidth}px`;
+  asciiCanvas.style.height = `${rasterHeight}px`;
+
+  asciiCtx.setTransform(rasterScale, 0, 0, rasterScale, 0, 0);
+  asciiCtx.clearRect(0, 0, logicalWidth, logicalHeight);
+  asciiCtx.fillStyle = "#000";
+  asciiCtx.fillRect(0, 0, logicalWidth, logicalHeight);
+  asciiCtx.font = `600 ${renderFontSize}px monospace`;
+  asciiCtx.textBaseline = "top";
+  asciiCtx.imageSmoothingEnabled = false;
+  asciiCtx.fillStyle = "#fff";
+
+  for (let y = 0; y < frame.height; y++) {
+    const rowY = y * lineHeight;
+
+    if (!useColor) {
+      asciiCtx.fillText(frame.rows[y], 0, rowY);
+    } else {
+      for (let x = 0; x < frame.width; x++) {
+        const rawChar = frame.rows[y][x];
+        const index = (y * frame.width + x) * 4;
+        const r = frame.pixels[index];
+        const g = frame.pixels[index + 1];
+        const b = frame.pixels[index + 2];
+        const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+        const cellX = x * charWidth;
+        const cellStyle = getAsciiCellStyle(r, g, b, brightness, rawChar);
+
+        if (cellStyle.backgroundColor) {
+          asciiCtx.fillStyle = cellStyle.backgroundColor;
+          asciiCtx.fillRect(cellX, rowY, charWidth, lineHeight);
+        }
+
+        if (rawChar === " ") continue;
+
+        asciiCtx.fillStyle = cellStyle.textColor;
+        asciiCtx.fillText(rawChar, cellX, rowY);
+      }
+    }
+
+    if ((y + 1) % 16 === 0) {
+      if (jobId !== renderSequence) return;
+      setLoading(0.72 + ((y + 1) / frame.height) * 0.18);
+      await nextPaint();
+    }
+  }
+
+  if (jobId !== renderSequence) return;
+
+  setLoading(1);
+}
+
+function escapeHtml(char) {
+  if (char === "&") return "&amp;";
+  if (char === "<") return "&lt;";
+  if (char === ">") return "&gt;";
+  if (char === "\"") return "&quot;";
+  return char;
+}
+
+function buildExportHtml(frame, fontSize) {
+  const { renderFontSize, charWidth, lineHeight } = getCanvasMetrics(fontSize);
+  const rows = new Array(frame.height);
+
+  for (let y = 0; y < frame.height; y++) {
+    let row = "";
+
+    for (let x = 0; x < frame.width; x++) {
+      const rawChar = frame.rows[y][x];
+      const char = rawChar === " " ? "&nbsp;" : escapeHtml(rawChar);
+      const index = (y * frame.width + x) * 4;
+      const r = frame.pixels[index];
+      const g = frame.pixels[index + 1];
+      const b = frame.pixels[index + 2];
+      const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+      const cellStyle = getAsciiCellStyle(r, g, b, brightness, rawChar);
+      const textColor = cellStyle.textColor;
+      const backgroundColor = cellStyle.backgroundColor
+        ? `background-color: ${cellStyle.backgroundColor};`
+        : "";
+
+      row += `<span style="display:inline-block;width:${charWidth}px;height:${lineHeight}px;line-height:${lineHeight}px;color:${textColor};${backgroundColor}">${char}</span>`;
+    }
+
+    rows[y] = row;
+  }
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>ASCII Art</title>
+<style>
+  html, body {
+    margin: 0;
+    min-height: 100%;
+  }
+
+  body {
+    padding: 16px;
+    background: #000;
+    color: #fff;
+    font-family: monospace;
+    display: grid;
+    place-items: start center;
+  }
+
+  .frame {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: #000;
+    padding: 14px;
+    box-sizing: border-box;
+  }
+
+  pre {
+    margin: 0;
+    font-family: monospace;
+    font-size: ${renderFontSize}px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: pre;
+    letter-spacing: 0;
+  }
+</style>
+</head>
+<body><div class="frame"><pre>${rows.join("\n")}</pre></div></body>
+</html>`;
+}
 
 function clearHighlights() {
-  document.querySelectorAll("*").forEach(el => el.style.outline = "none");
+  document.querySelectorAll("[data-tutorial-highlight='true']").forEach(element => {
+    element.style.outline = "none";
+    element.style.position = "";
+    element.style.zIndex = "";
+    element.style.boxShadow = "";
+    element.style.borderRadius = "";
+    delete element.dataset.tutorialHighlight;
+  });
 }
 
 function startTutorial() {
   const steps = [
     { id: "fileInput", text: "Upload an image to convert it to ASCII." },
-    { id: "fontSize", text: "Adjust ASCII font size." },
-    { id: "toggleColor", text: "Toggle color or monochrome mode." },
-    { id: "toggleUltra", text: "Enable ultra‑detail mode." },
-    { id: "ultraScale", text: "Set ultra‑detail scale." },
-    { id: "exportTxt", text: "Export ASCII as .txt file." },
-    { id: "exportHtml", text: "Export ASCII as colored HTML." }
+    { id: "fontSize", text: "Adjust the on-screen ASCII font size." },
+    { id: "toggleColor", text: "Switch between color and monochrome preview." },
+    { id: "toggleUltra", text: "Enable the denser ASCII character set." },
+    { id: "ultraScale", text: "Choose how aggressively ultra detail scales up." },
+    { id: "exportTxt", text: "Export the current ASCII result as plain text." },
+    { id: "exportHtml", text: "Export the current ASCII result as HTML." }
   ];
 
   let index = 0;
 
   const overlay = document.createElement("div");
   overlay.style.position = "fixed";
-  overlay.style.top = 0;
-  overlay.style.left = 0;
-  overlay.style.width = "100%";
-  overlay.style.height = "100%";
-  overlay.style.background = "rgba(0,0,0,0.4)";
+  overlay.style.inset = 0;
+  overlay.style.background = "rgba(0, 0, 0, 0.28)";
   overlay.style.zIndex = 9999;
   document.body.appendChild(overlay);
 
   const box = document.createElement("div");
   box.style.position = "absolute";
-  box.style.background = "#222";
-  box.style.padding = "15px";
-  box.style.border = "2px solid #4caf50";
-  box.style.borderRadius = "8px";
+  box.style.background = "#1c1f24";
+  box.style.padding = "16px";
+  box.style.border = "1px solid rgba(255, 255, 255, 0.14)";
+  box.style.borderRadius = "14px";
   box.style.maxWidth = "260px";
   box.style.color = "#fff";
   box.style.fontFamily = "monospace";
   box.style.lineHeight = "1.4";
-  box.style.zIndex = 10000;
+  box.style.boxShadow = "0 18px 40px rgba(0, 0, 0, 0.32)";
+  box.style.zIndex = 10002;
   overlay.appendChild(box);
 
   const nextBtn = document.createElement("button");
   nextBtn.textContent = "Next";
   nextBtn.style.marginTop = "10px";
-  nextBtn.style.background = "#4caf50";
-  nextBtn.style.color = "#fff";
+  nextBtn.style.background = "#f3f4f6";
+  nextBtn.style.color = "#14161a";
   nextBtn.style.border = "none";
-  nextBtn.style.padding = "6px 12px";
+  nextBtn.style.borderRadius = "10px";
+  nextBtn.style.padding = "8px 14px";
   nextBtn.style.cursor = "pointer";
   nextBtn.style.fontFamily = "monospace";
   box.appendChild(nextBtn);
 
   function showStep() {
     const step = steps[index];
+
     if (!step) {
       clearHighlights();
       overlay.remove();
       return;
     }
 
-    const el = document.getElementById(step.id);
+    const element = document.getElementById(step.id);
     clearHighlights();
-    el.style.outline = "3px solid #4caf50";
-    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    element.dataset.tutorialHighlight = "true";
+    element.style.position = "relative";
+    element.style.zIndex = "10001";
+    element.style.outline = "3px solid rgba(105, 243, 171, 0.85)";
+    element.style.boxShadow = "0 0 0 8px rgba(255, 255, 255, 0.06)";
+    element.style.borderRadius = "12px";
+    element.scrollIntoView({ behavior: "smooth", block: "center" });
 
     box.innerHTML = `<p>${step.text}</p>`;
     box.appendChild(nextBtn);
 
-    const rect = el.getBoundingClientRect();
+    const rect = element.getBoundingClientRect();
     const boxWidth = 260;
 
     let left = rect.right + 15;
     let top = rect.top;
 
-    if (left + boxWidth > window.innerWidth)
+    if (left + boxWidth > window.innerWidth) {
       left = rect.left - boxWidth - 15;
+    }
 
-    if (top + 140 > window.innerHeight)
+    if (top + 140 > window.innerHeight) {
       top = window.innerHeight - 160;
+    }
 
     if (top < 10) top = 10;
 
-    box.style.left = left + "px";
-    box.style.top = top + "px";
+    box.style.left = `${left}px`;
+    box.style.top = `${top}px`;
   }
 
   nextBtn.onclick = () => {
-    index++;
+    index += 1;
     showStep();
   };
 
   showStep();
 }
 
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = window.setTimeout(() => {
+    if (currentFrame) {
+      renderCurrentFrame();
+    }
+  }, 120);
+});
+
 window.onload = () => {
   fontSizeSlider.value = 4;
   fontSizeInput.value = 4;
-  applyFontSize();
+  zoomRange.value = 100;
+  zoomInput.value = 100;
+  syncControls();
+  syncActionButtons();
+  updateRenderMeta();
 
   setTimeout(() => {
     if (confirm("Start tutorial?")) startTutorial();
   }, 500);
 };
 </script>
-
 </body>
 </html>
